@@ -89,6 +89,7 @@ def staff_menu(
             text="⬅️ Назад",
             callback_data=StaffAction(action="back_main_menu")
         )
+
     return builder.as_markup()
 
 

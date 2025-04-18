@@ -38,7 +38,7 @@ async def staff_panel(message: types.Message):
         await message.answer("Ошибка: данные пользователя не найдены", reply_markup=ReplyKeyboardRemove())
         return
 
-    if user_data.get('is_owner'):
+    if user_data.get('is_owner') or user_data.get('is_staff'):
         await message.answer(
             "Вы зашли в панель персонала как Админ",
             reply_markup=ReplyKeyboardRemove()  # Сначала закрываем Reply-клавиатуру
@@ -47,11 +47,6 @@ async def staff_panel(message: types.Message):
         await message.answer(
             "Выберите действие:",
             reply_markup=kb_staff_menu(role="owner")
-        )
-    elif user_data.get('is_staff'):
-        await message.answer(
-            "Вы зашли в панель персонала как Сотрудник",
-            reply_markup=ReplyKeyboardRemove()  # Закрываем reply-клавиатуру
         )
     else:
         await message.answer(

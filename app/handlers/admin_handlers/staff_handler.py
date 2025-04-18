@@ -5,6 +5,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import ReplyKeyboardRemove
 
 from app.handlers.admin_handlers.add_product_handler import AddProductStates
+from app.handlers.admin_handlers.add_staff_handler import AddStaffStates
 from app.keyboard import kb_staff_menu
 from app.keyboard import kb_menu
 from app.handlers.admin_handlers.mailing_handle import MailingStates
@@ -33,6 +34,25 @@ async def handle_mailing_callback(
     except Exception as e:
         logging.error(f"Ошибка запуска рассылки: {e}")
         await callback.answer("⚠️ Ошибка запуска рассылки", show_alert=True)
+
+
+@router.callback_query(StaffAction.filter(F.action == "add_staff"))
+async def handle_add_staff_callback(
+        callback: types.CallbackQuery,
+        state: FSMContext
+):
+    try:
+        await state.clear()
+        await callback.message.delete()
+        await callback.message.answer(
+            "✉️ Введите имя пользователя в формате (@username):",
+            reply_markup=types.ReplyKeyboardRemove()
+        )
+        await state.set_state(AddStaffStates.waiting_for_username)
+        await callback.answer()
+    except Exception as e:
+        logging.error(f"Ошибка при добавлении персонала: {e}")
+        await callback.answer("⚠️ Ошибка при добавлении персонала", show_alert=True)
 
 
 @router.callback_query(StaffAction.filter(F.action == "back_main_menu"))
