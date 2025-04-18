@@ -120,8 +120,7 @@ class UserFetcher:
                 SELECT 
                     id_telegram, 
                     tag_telegram, 
-                    is_staff, 
-                    is_owner 
+                    role 
                 FROM users 
                 WHERE id_telegram = ?
             """, (telegram_id,))
@@ -129,6 +128,26 @@ class UserFetcher:
             return dict(result) if result else None
         except Exception as e:
             logging.error(f"Ошибка получения пользователя: {e}")
+            return None
+        finally:
+            conn.close()
+
+    @classmethod
+    def get_role_by_telegram_id(cls, telegram_id: int) -> str | None:
+        """Возвращает роль пользователя (admin/staff/user) или None если не найден"""
+        db_path = os.path.join('app', 'utils', 'db', 'shop.db')
+        conn = sqlite3.connect(db_path)
+        try:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT role 
+                FROM users 
+                WHERE id_telegram = ?
+            """, (telegram_id,))
+            result = cursor.fetchone()
+            return result[0] if result else None  # Возвращаем только роль (первый элемент кортежа)
+        except Exception as e:
+            logging.error(f"Ошибка получения роли пользователя: {e}")
             return None
         finally:
             conn.close()

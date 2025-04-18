@@ -44,20 +44,20 @@ cursor = conn.cursor()
 #     INSERT INTO products (title, description, price, image)
 #     VALUES (?, ?, ?, ?)
 # """, product_with_image)
-#
-# cursor.execute("""
-#     UPDATE users SET is_owner = 1
-# """)
 
 # cursor.execute("""
-#     INSERT INTO orders (address, total_price, user_id, status)
-#     VALUES ('Донбасс2', 99999, 3, 'new')
+#     UPDATE users SET role = 'owner'
 # """)
-#
-# cursor.execute("""
-#     INSERT INTO order_products (product_id, order_id, quantity)
-#     VALUES (2, 4, 1)
-# """)
+
+cursor.execute("""
+    INSERT INTO orders (address, total_price, user_id, status)
+    VALUES ('Test', 3333, 3, 'new')
+""")
+
+cursor.execute("""
+    INSERT INTO order_products (product_id, order_id, quantity)
+    VALUES (2, 3, 1)
+""")
 
 # Сохраняем изменения
 conn.commit()

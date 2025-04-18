@@ -14,8 +14,7 @@ def initialize_database():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             id_telegram INTEGER UNIQUE NOT NULL,
             tag_telegram TEXT UNIQUE,
-            is_staff BOOLEAN DEFAULT FALSE NOT NULL,
-            is_owner BOOLEAN DEFAULT FALSE NOT NULL,
+            role TEXT DEFAULT 'user' CHECK(role IN ('user', 'staff', 'owner')),
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')

@@ -1,7 +1,7 @@
+import sqlite3
 import logging
 import os
-import sqlite3
-
+from typing import Optional, Union
 
 class UserAdd:
     @classmethod
@@ -22,10 +22,7 @@ class UserAdd:
             conn.close()
 
 
-import sqlite3
-import logging
-import os
-from typing import Optional, Union
+
 
 
 class ProductAdd:
