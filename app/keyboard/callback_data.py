@@ -23,4 +23,4 @@ class OrderNavigation(CallbackData, prefix="order_nav"):
     order_id: int | None = None
     page: int | None = None
     status: str | None = None
-
+    is_admin: bool = False

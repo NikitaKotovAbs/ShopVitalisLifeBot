@@ -73,6 +73,7 @@ async def handle_orders_callback(
         callback: types.CallbackQuery,
         state: FSMContext
 ):
+    await state.clear()
     try:
         orders = ProductFetcher.get_all_orders()
 
@@ -83,7 +84,8 @@ async def handle_orders_callback(
         # Сохраняем заказы и текущую страницу в состоянии
         await state.update_data(
             all_orders=orders,
-            current_page=0
+            current_page=0,
+            is_admin=True
         )
         print(await state.get_data())  # Убедитесь, что данные есть
 
@@ -91,7 +93,8 @@ async def handle_orders_callback(
         await show_order_page(
             callback.message,
             orders,
-            0
+            0,
+            is_admin=True
         )
         await callback.answer()
 

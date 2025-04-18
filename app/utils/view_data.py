@@ -115,64 +115,74 @@ async def show_product(
             await bot.send_message(chat.id, "⚠️ Ошибка при загрузке товара")
 
 
-async def show_order_page(message: types.Message, orders: list, page: int):
-    order = orders[page]
-
-    products_text = "\n".join(
-        f"➡️ {p['title']} x{p['quantity']} - {p['price']}₽"
-        for p in order['products']
-    )
-
-    order_text = (
-        f"📦 Заказ #{order['id']}\n"
-        f"👤 Пользователь: {order['user']['tag_telegram']}\n"
-        f"📅 Дата: {order['created_at']}\n"
-        f"🏠 Адрес: {order['address']}\n"
-        f"🔄 Статус: {Notifier.get_status_display(order['status'])}\n"
-        f"💳 Сумма: {order['total_price']}₽\n\n"
-        f"🛒 Товары:\n{products_text}"
-    )
-
-    await message.edit_text(
-        text=order_text,
-        reply_markup=orders_keyboard(orders, page)
-    )
-
-async def show_user_order(
-        message: types.Message,
-        orders: list,
-        page: int
+async def show_order_page(
+    message: types.Message,
+    orders: list,
+    page: int,
+    is_admin: bool = False,
+    edit_existing: bool = True
 ) -> types.Message:
-    """Отображает заказ пользователя и возвращает объект сообщения"""
+    """
+    Универсальная функция отображения заказа
+    :param message: Объект сообщения Telegram
+    :param orders: Список заказов
+    :param page: Текущая страница
+    :param is_admin: Режим администратора (True/False)
+    :param edit_existing: Редактировать существующее сообщение (True) или отправлять новое (False)
+    :return: Объект сообщения
+    """
     try:
         order = orders[page]
         total_orders = len(orders)
 
+        # Формируем текст товаров
         products_text = "\n".join(
             f"➡️ {p['title']} x{p['quantity']} - {p['price']}₽"
             for p in order['products']
         )
 
-        order_text = (
-            f"📦 Ваш заказ #{order['id']} ({page + 1}/{total_orders})\n"
-            f"📅 Дата: {order['created_at']}\n"
-            f"🏠 Адрес: {order['address']}\n"
-            f"🔄 Статус: {Notifier.get_status_display(order['status'])}\n"
-            f"💳 Сумма: {order['total_price']}₽\n\n"
-            f"🛒 Состав заказа:\n{products_text}"
-        )
+        # Формируем основной текст в зависимости от режима
+        if is_admin:
+            order_text = (
+                f"📦 Заказ #{order['id']}\n"
+                f"👤 Пользователь: {order['user']['tag_telegram']}\n"
+                f"📅 Дата: {order['created_at']}\n"
+                f"🏠 Адрес: {order['address']}\n"
+                f"🔄 Статус: {Notifier.get_status_display(order['status'])}\n"
+                f"💳 Сумма: {order['total_price']}₽\n\n"
+                f"🛒 Товары:\n{products_text}"
+            )
+        else:
+            order_text = (
+                f"📦 Ваш заказ #{order['id']} ({page + 1}/{total_orders})\n"
+                f"📅 Дата: {order['created_at']}\n"
+                f"🏠 Адрес: {order['address']}\n"
+                f"🔄 Статус: {Notifier.get_status_display(order['status'])}\n"
+                f"💳 Сумма: {order['total_price']}₽\n\n"
+                f"🛒 Состав заказа:\n{products_text}"
+            )
 
-        keyboard = orders_keyboard(orders, page)
+        # Получаем клавиатуру (должна поддерживать is_admin)
+        keyboard = orders_keyboard(orders, page, is_admin)
 
-        # Всегда отправляем новое сообщение
-        return await message.answer(
-            text=order_text,
-            reply_markup=keyboard
-        )
+        # Выбираем метод отправки
+        if edit_existing:
+            await message.edit_text(
+                text=order_text,
+                reply_markup=keyboard
+            )
+            return message
+        else:
+            return await message.answer(
+                text=order_text,
+                reply_markup=keyboard
+            )
 
     except IndexError:
-        logging.error(f"Неверный индекс заказа: {page}")
-        return await message.answer("⚠️ Ошибка отображения заказа")
+        error_msg = "⚠️ Неверный номер заказа" if is_admin else "⚠️ Ошибка отображения заказа"
+        logging.error(f"IndexError: page={page}, orders_count={len(orders)}")
     except Exception as e:
-        logging.error(f"Ошибка отображения заказа: {e}")
-        return await message.answer("⚠️ Произошла ошибка")
+        error_msg = "⚠️ Ошибка загрузки заказа" if is_admin else "⚠️ Произошла ошибка"
+        logging.error(f"Error showing order: {e}")
+
+    return await message.answer(error_msg)

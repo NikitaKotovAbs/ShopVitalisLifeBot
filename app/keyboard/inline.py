@@ -92,32 +92,33 @@ def staff_menu(
     return builder.as_markup()
 
 
-def orders_keyboard(orders: list, current_page: int):
+def orders_keyboard(orders: list, current_page: int, is_admin: bool = False):
     builder = InlineKeyboardBuilder()
 
     # Кнопки навигации
     if current_page > 0:
         builder.button(
             text="⬅️ Предыдущий",
-            callback_data=OrderNavigation(action="view_order", page=current_page - 1)
+            callback_data=OrderNavigation(action="view_order", page=current_page - 1, is_admin=is_admin)
         )
 
     if current_page < len(orders) - 1:
         builder.button(
             text="Следующий ➡️",
-            callback_data=OrderNavigation(action="view_order", page=current_page + 1)
+            callback_data=OrderNavigation(action="view_order", page=current_page + 1, is_admin=is_admin)
         )
 
-    # Кнопка изменения статуса
-    builder.button(
-        text="Изменить статус",
-        callback_data=OrderNavigation(action="change_status", order_id=orders[current_page]['id'])
-    )
+    if is_admin:
+        # Кнопка изменения статуса
+        builder.button(
+            text="Изменить статус",
+            callback_data=OrderNavigation(action="change_status", order_id=orders[current_page]['id'])
+        )
 
-    builder.button(
-        text="Вернуться в меню",
-        callback_data=StaffAction(action="back_staff_menu")
-    )
+        builder.button(
+            text="Вернуться в меню",
+            callback_data=StaffAction(action="back_staff_menu")
+        )
 
     builder.adjust(2, 1)
     return builder.as_markup()

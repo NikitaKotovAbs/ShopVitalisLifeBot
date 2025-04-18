@@ -29,8 +29,9 @@ async def handle_my_orders(
             return
 
         await state.update_data(
-            my_orders=orders,
+            all_orders=orders,
             current_page=0,
+            is_admin=False
              # Явно указываем режим пользователя
         )
 
@@ -38,6 +39,8 @@ async def handle_my_orders(
             message,
             orders,
             0,
+            is_admin=False,
+            edit_existing=False
 
         )
 

@@ -19,17 +19,18 @@ async def handle_view_order(
         callback_data: OrderNavigation,
         state: FSMContext
 ):
+
     try:
 
         print(f"Получен callback: {callback_data}")  # Проверьте action и page
         data = await state.get_data()
         print(f"Данные в state: {data}")  # Убедитесь, что orders есть
         orders = data.get('all_orders', [])
-
+        is_admin = data.get('is_admin')
         # Проверяем и корректируем page
         page = max(0, min(callback_data.page, len(orders) - 1))
 
-        await show_order_page(callback.message, orders, page)
+        await show_order_page(callback.message, orders, page, is_admin)
         await state.update_data(current_page=page)
         await callback.answer()
 
