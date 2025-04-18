@@ -17,3 +17,10 @@ class CloseBasket (CallbackData, prefix="close_basket"):
 class StaffAction(CallbackData, prefix="staff"):
     action: str
     product_id: int = 0
+
+class OrderNavigation(CallbackData, prefix="order_nav"):
+    action: str
+    order_id: int | None = None
+    page: int | None = None
+    status: str | None = None
+

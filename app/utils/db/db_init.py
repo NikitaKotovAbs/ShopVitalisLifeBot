@@ -40,7 +40,7 @@ def initialize_database():
             address TEXT NOT NULL,
             total_price REAL NOT NULL CHECK(total_price >= 0),
             user_id INTEGER NOT NULL,
-            status TEXT DEFAULT 'new' CHECK(status IN ('new', 'processing', 'completed', 'cancelled')),
+            status TEXT DEFAULT 'new' CHECK(status IN ('new', 'processing', 'delivering', 'delivered', 'completed', 'cancelled')),
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )

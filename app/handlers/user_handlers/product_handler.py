@@ -6,7 +6,7 @@ from app.keyboard.callback_data import ProductAction
 from app.utils.db.operations.fetch_data import ProductFetcher
 from aiogram import Bot
 from .basket_handlers import show_basket
-from ...utils.view_products import show_product
+from ...utils.view_data import show_product
 
 router = Router()
 product_manager = ProductManager()

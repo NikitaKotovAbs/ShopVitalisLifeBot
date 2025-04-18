@@ -1,6 +1,7 @@
 import logging
 import os
 import sqlite3
+from typing import Optional
 
 
 class ProductFetcher:
@@ -36,6 +37,71 @@ class ProductFetcher:
         except Exception as e:
             logging.error(f"Ошибка при загрузке товаров: {e}")
             return {}
+        finally:
+            conn.close()
+
+    @classmethod
+    def get_all_orders(cls):
+        db_path = os.path.join('app', 'utils', 'db', 'shop.db')
+        conn = sqlite3.connect(db_path)
+        try:
+            cursor = conn.cursor()
+
+            # Изменяем сортировку - старые заказы сначала
+            cursor.execute('''
+                SELECT 
+                    o.id AS order_id,
+                    o.address,
+                    o.total_price,
+                    o.status,
+                    o.created_at AS order_created,
+                    u.id_telegram,
+                    u.tag_telegram,
+                    p.id AS product_id,
+                    p.title,
+                    p.description,
+                    p.price,
+                    op.quantity
+                FROM orders o
+                JOIN users u ON o.user_id = u.id
+                LEFT JOIN order_products op ON o.id = op.order_id
+                LEFT JOIN products p ON op.product_id = p.id
+                ORDER BY o.created_at ASC, o.id, p.id
+            ''')
+
+            orders = {}
+            for row in cursor.fetchall():
+                order_id = row[0]
+
+                if order_id not in orders:
+                    orders[order_id] = {
+                        'id': order_id,
+                        'address': row[1],
+                        'total_price': row[2],
+                        'status': row[3],
+                        'created_at': row[4],
+                        'user': {
+                            'id_telegram': row[5],
+                            'tag_telegram': row[6]
+                        },
+                        'products': []
+                    }
+
+                if row[7]:  # product_id
+                    orders[order_id]['products'].append({
+                        'id': row[7],
+                        'title': row[8],
+                        'description': row[9],
+                        'price': row[10],
+                        'quantity': row[11]
+                    })
+
+            # Просто преобразуем в список, не сортируем дополнительно
+            return list(orders.values())
+
+        except Exception as e:
+            logging.error(f"Ошибка при загрузке заказов: {e}")
+            return []
         finally:
             conn.close()
 
@@ -80,5 +146,89 @@ class UserFetcher:
         except Exception as e:
             logging.error(f"Ошибка получения пользователей: {e}")
             return []
+        finally:
+            conn.close()
+
+    @classmethod
+    def get_orders_by_telegram_id(cls, telegram_id: int) -> list[dict]:
+        """Получает все заказы пользователя по Telegram ID"""
+        db_path = os.path.join('app', 'utils', 'db', 'shop.db')
+        conn = sqlite3.connect(db_path)
+        try:
+            cursor = conn.cursor()
+
+            cursor.execute('''
+                SELECT 
+                    o.id,
+                    o.address,
+                    o.total_price,
+                    o.status,
+                    o.created_at,
+                    p.id,
+                    p.title,
+                    p.description,
+                    p.price,
+                    op.quantity
+                FROM orders o
+                JOIN users u ON o.user_id = u.id
+                LEFT JOIN order_products op ON o.id = op.order_id
+                LEFT JOIN products p ON op.product_id = p.id
+                WHERE u.id_telegram = ?
+                ORDER BY o.created_at DESC
+            ''', (telegram_id,))
+
+            orders = {}
+            for row in cursor.fetchall():
+                order_id = row[0]
+                if order_id not in orders:
+                    orders[order_id] = {
+                        'id': order_id,
+                        'address': row[1],
+                        'total_price': row[2],
+                        'status': row[3],
+                        'created_at': row[4],
+                        'products': []
+                    }
+                if row[5]:  # Если есть товар
+                    orders[order_id]['products'].append({
+                        'id': row[5],
+                        'title': row[6],
+                        'description': row[7],
+                        'price': row[8],
+                        'quantity': row[9]
+                    })
+
+            return list(orders.values())
+
+        except Exception as e:
+            logging.error(f"Ошибка получения заказов для пользователя {telegram_id}: {e}")
+            return []
+        finally:
+            conn.close()
+
+class OrderFetcher:
+    @classmethod
+    def get_order_user_info(cls, order_id: int) -> Optional[dict]:
+        """Получает информацию о пользователе по ID заказа"""
+        db_path = os.path.join('app', 'utils', 'db', 'shop.db')
+        conn = sqlite3.connect(db_path)
+        try:
+            cursor = conn.cursor()
+            cursor.execute("""
+                    SELECT 
+                        u.id_telegram,
+                        o.status as old_status
+                    FROM orders o
+                    JOIN users u ON o.user_id = u.id
+                    WHERE o.id = ?
+                """, (order_id,))
+            result = cursor.fetchone()
+            return {
+                'user_id': result[0],
+                'old_status': result[1]
+            } if result else None
+        except Exception as e:
+            logging.error(f"Ошибка получения пользователя для заказа {order_id}: {e}")
+            return None
         finally:
             conn.close()

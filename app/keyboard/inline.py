@@ -1,5 +1,5 @@
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from app.keyboard.callback_data import JuiceNavigation, ProductAction, StaffAction
+from app.keyboard.callback_data import JuiceNavigation, ProductAction, StaffAction, OrderNavigation
 from app.product_manage import ProductManager
 product_manager = ProductManager()
 
@@ -89,6 +89,66 @@ def staff_menu(
             text="⬅️ Назад",
             callback_data=StaffAction(action="back_main_menu")
         )
+    return builder.as_markup()
+
+
+def orders_keyboard(orders: list, current_page: int):
+    builder = InlineKeyboardBuilder()
+
+    # Кнопки навигации
+    if current_page > 0:
+        builder.button(
+            text="⬅️ Предыдущий",
+            callback_data=OrderNavigation(action="view_order", page=current_page - 1)
+        )
+
+    if current_page < len(orders) - 1:
+        builder.button(
+            text="Следующий ➡️",
+            callback_data=OrderNavigation(action="view_order", page=current_page + 1)
+        )
+
+    # Кнопка изменения статуса
+    builder.button(
+        text="Изменить статус",
+        callback_data=OrderNavigation(action="change_status", order_id=orders[current_page]['id'])
+    )
+
+    builder.button(
+        text="Вернуться в меню",
+        callback_data=StaffAction(action="back_staff_menu")
+    )
+
+    builder.adjust(2, 1)
+    return builder.as_markup()
+
+
+def status_keyboard(order_id: int):
+    builder = InlineKeyboardBuilder()
+
+    statuses = {
+        "processing": "В обработке",
+        "delivering": "В доставке",
+        "delivered": "Доставлен",
+        "completed": "Выполнен"
+    }
+
+    for status, text in statuses.items():
+        builder.button(
+            text=text,
+            callback_data=OrderNavigation(
+                action="set_status",
+                order_id=order_id,
+                status=status
+            )
+        )
+
+    builder.button(
+        text="Назад",
+        callback_data=OrderNavigation(action="back_order")
+    )
+
+    builder.adjust(1)  # По одной кнопке в строке
     return builder.as_markup()
 
 def edit_product_action():

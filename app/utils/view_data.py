@@ -1,8 +1,12 @@
 import logging
+from aiogram import Router, types, F
 from aiogram.types import BufferedInputFile, InputMediaPhoto, Message, Chat, CallbackQuery
 from aiogram import Bot
+from app.keyboard import kb_order
+from app.keyboard.inline import orders_keyboard
 from app.product_manage import ProductManager
 from app.keyboard.callback_data import ProductAction
+from app.utils.notify import Notifier
 
 product_manager = ProductManager()
 
@@ -109,3 +113,66 @@ async def show_product(
             await message.answer("⚠️ Ошибка при загрузке товара")
         else:
             await bot.send_message(chat.id, "⚠️ Ошибка при загрузке товара")
+
+
+async def show_order_page(message: types.Message, orders: list, page: int):
+    order = orders[page]
+
+    products_text = "\n".join(
+        f"➡️ {p['title']} x{p['quantity']} - {p['price']}₽"
+        for p in order['products']
+    )
+
+    order_text = (
+        f"📦 Заказ #{order['id']}\n"
+        f"👤 Пользователь: {order['user']['tag_telegram']}\n"
+        f"📅 Дата: {order['created_at']}\n"
+        f"🏠 Адрес: {order['address']}\n"
+        f"🔄 Статус: {Notifier.get_status_display(order['status'])}\n"
+        f"💳 Сумма: {order['total_price']}₽\n\n"
+        f"🛒 Товары:\n{products_text}"
+    )
+
+    await message.edit_text(
+        text=order_text,
+        reply_markup=orders_keyboard(orders, page)
+    )
+
+async def show_user_order(
+        message: types.Message,
+        orders: list,
+        page: int
+) -> types.Message:
+    """Отображает заказ пользователя и возвращает объект сообщения"""
+    try:
+        order = orders[page]
+        total_orders = len(orders)
+
+        products_text = "\n".join(
+            f"➡️ {p['title']} x{p['quantity']} - {p['price']}₽"
+            for p in order['products']
+        )
+
+        order_text = (
+            f"📦 Ваш заказ #{order['id']} ({page + 1}/{total_orders})\n"
+            f"📅 Дата: {order['created_at']}\n"
+            f"🏠 Адрес: {order['address']}\n"
+            f"🔄 Статус: {Notifier.get_status_display(order['status'])}\n"
+            f"💳 Сумма: {order['total_price']}₽\n\n"
+            f"🛒 Состав заказа:\n{products_text}"
+        )
+
+        keyboard = orders_keyboard(orders, page)
+
+        # Всегда отправляем новое сообщение
+        return await message.answer(
+            text=order_text,
+            reply_markup=keyboard
+        )
+
+    except IndexError:
+        logging.error(f"Неверный индекс заказа: {page}")
+        return await message.answer("⚠️ Ошибка отображения заказа")
+    except Exception as e:
+        logging.error(f"Ошибка отображения заказа: {e}")
+        return await message.answer("⚠️ Произошла ошибка")
