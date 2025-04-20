@@ -31,7 +31,7 @@ async def handle_my_orders(
         await state.update_data(
             all_orders=orders,
             current_page=0,
-            is_admin=False
+            role="user",
              # Явно указываем режим пользователя
         )
 
@@ -39,7 +39,7 @@ async def handle_my_orders(
             message,
             orders,
             0,
-            is_admin=False,
+            role="user",
             edit_existing=False
 
         )

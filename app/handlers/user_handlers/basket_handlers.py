@@ -1,8 +1,9 @@
-from aiogram import Router, types
+from aiogram import Router, types, F
 from aiogram.filters import Command
 import logging
 from decimal import Decimal
 
+from app.keyboard.callback_data import ProductAction
 from app.product_manage import ProductManager
 from app.keyboard.inline import basket_keyboard
 from app.utils.db.operations.fetch_data import ProductFetcher
@@ -48,3 +49,26 @@ async def show_basket(message: types.Message, user_id: int):
 @router.message(Command("basket"))
 async def basket_command(message: types.Message):
     await show_basket(message, message.from_user.id)
+
+
+# @router.callback_query(ProductAction.filter(F.action == "checkout"))
+# async def process_order(callback: types.CallbackQuery):
+#     print("Я вошёл в обработчик")
+#     try:
+#         print("Я вошёл в обработчик")
+#         # 1. Сначала отвечаем на callback (обязательно)
+#         await callback.answer("🔄 Начинаем оформление заказа...")
+#
+#         # 2. Редактируем текущее сообщение с корзиной
+#         await callback.message.edit_text(
+#             "✅ Заказ принят в обработку!\n\n"
+#             "Мы готовим ваш заказ к отправке. Ожидайте уведомления.",
+#             reply_markup=None  # Убираем клавиатуру после оформления
+#         )
+#
+#         # 3. Дополнительно можно отправить новое сообщение с деталями
+#         # await callback.message.answer("Детали заказа: ...")
+#
+#     except Exception as e:
+#         logging.error(f"Ошибка при оформлении заказа: {e}")
+#         await callback.answer("⚠️ Ошибка оформления", show_alert=True)

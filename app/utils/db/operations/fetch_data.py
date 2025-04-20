@@ -1,7 +1,7 @@
 import logging
 import os
 import sqlite3
-from typing import Optional
+from typing import Optional, Dict
 
 
 class ProductFetcher:
@@ -105,6 +105,37 @@ class ProductFetcher:
         finally:
             conn.close()
 
+    @classmethod
+    def get_product_by_id(cls, product_id: int) -> Dict:
+        """Возвращает данные товара по его ID в формате словаря."""
+        db_path = os.path.join('app', 'utils', 'db', 'shop.db')
+        conn = sqlite3.connect(db_path)
+        try:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+
+            # Исправленный SQL-запрос (убрана лишняя запятая)
+            cursor.execute("""
+                    SELECT 
+                        id,
+                        title,
+                        description,
+                        price
+                    FROM products
+                    WHERE id = ?
+                """, (product_id,))
+
+            result = cursor.fetchone()
+            return dict(result) if result else {}
+
+        except sqlite3.Error as e:
+            logging.error(f"SQL error in get_product_by_id: {e}")
+            return {}
+        except Exception as e:
+            logging.error(f"Error in get_product_by_id: {e}")
+            return {}
+        finally:
+            conn.close()
 
 
 class UserFetcher:

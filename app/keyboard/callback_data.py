@@ -5,7 +5,7 @@ from aiogram.filters.callback_data import CallbackData
 class JuiceNavigation(CallbackData, prefix="juice"):
     action: str  # "prev" или "next"
     current_index: int
-    is_admin: bool = False
+    role: str = "user"
 
 class ProductAction (CallbackData, prefix="product"):
     action: str # "add" | "remove" | "view" | "clear" | "checkout"
@@ -23,4 +23,4 @@ class OrderNavigation(CallbackData, prefix="order_nav"):
     order_id: int | None = None
     page: int | None = None
     status: str | None = None
-    is_admin: bool = False
+    role: str = "user"

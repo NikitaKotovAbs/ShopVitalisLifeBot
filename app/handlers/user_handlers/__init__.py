@@ -7,6 +7,7 @@ from .my_order_handler import router as my_order_router
 from .recipe_handler import router as recipe_router
 from .product_handler import router as product_router
 from .basket_handlers import router as basket_router
+from .order_payment import router as order_payment_router
 __version__ = "1.0.0"
 router = Router(name=__name__)
 
@@ -18,6 +19,7 @@ router.include_routers(
     my_order_router,
     recipe_router,
     product_router,
-    basket_router
+    basket_router,
+    order_payment_router
 
 )

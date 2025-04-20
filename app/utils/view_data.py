@@ -16,10 +16,10 @@ async def show_product(
     fetch_data_func: callable,
     keyboard_func: callable,
     bot: Bot = None,
-    is_admin: bool = False  # Новый параметр для режима админки
+    role: str = "user"
 ):
     try:
-        # Определяем контекст (остается без изменений)
+        # Определяем контекст
         if isinstance(target, CallbackQuery):
             message = target.message
             chat = message.chat
@@ -50,30 +50,28 @@ async def show_product(
 
         # Предполагаем, что первый элемент - ID товара
         item_id = item_data[0]
-        title, desc, price, image_blob = item_data[1:]  # Остальные данные
+        title, desc, price, image_blob = item_data[1:]
 
         # Формируем caption с учетом режима
-        caption = (
-            f"<b>🛠 Режим администратора</b>\n\n<b>{title}</b>\n\n{desc}\n\n💰 Цена: {price} руб.\n" if is_admin else "" +
-            f"<b>{title}</b>\n\n{desc}\n\n💰 Цена: {price} руб."
-        )
+        admin_prefix = "<b>🛠 Режим администратора</b>\n\n" if role in ("owner", "staff") else ""
+        caption = f"{admin_prefix}<b>{title}</b>\n\n{desc}\n\n💰 Цена: {price} руб."
 
         # Для админки не нужно количество в корзине
-        current_qty = 0 if is_admin else product_manager.get_products(user_id).get(item_id, 0)
+        current_qty = 0 if role in ("owner", "staff") else product_manager.get_products(user_id).get(item_id, 0)
 
-        logging.info(f"Showing product: is_admin={is_admin}, index={index}")
+        logging.info(f"Showing product: role={role}, index={index}")
 
-        # Создаем соответствующую клавиатуру
+        # Создаем клавиатуру
         keyboard = keyboard_func(
             current_index=index,
             total_items=len(items),
             item_id=item_id,
             current_qty=current_qty,
             user_id=user_id,
-            is_admin=is_admin  # Передаем флаг в генератор клавиатуры
+            role=role
         )
 
-        # Остальная логика отображения (без изменений)
+        # Отображение
         if image_blob:
             if message and message.photo:
                 await message.edit_media(
@@ -119,7 +117,7 @@ async def show_order_page(
     message: types.Message,
     orders: list,
     page: int,
-    is_admin: bool = False,
+    role: str = "user",
     edit_existing: bool = True
 ) -> types.Message:
     """
@@ -127,7 +125,7 @@ async def show_order_page(
     :param message: Объект сообщения Telegram
     :param orders: Список заказов
     :param page: Текущая страница
-    :param is_admin: Режим администратора (True/False)
+    :param role: Режим администратора (True/False)
     :param edit_existing: Редактировать существующее сообщение (True) или отправлять новое (False)
     :return: Объект сообщения
     """
@@ -142,7 +140,7 @@ async def show_order_page(
         )
 
         # Формируем основной текст в зависимости от режима
-        if is_admin:
+        if role == "staff" or role == "owner":
             order_text = (
                 f"📦 Заказ #{order['id']}\n"
                 f"👤 Пользователь: {order['user']['tag_telegram']}\n"
@@ -163,7 +161,7 @@ async def show_order_page(
             )
 
         # Получаем клавиатуру (должна поддерживать is_admin)
-        keyboard = orders_keyboard(orders, page, is_admin)
+        keyboard = orders_keyboard(orders, page, role)
 
         # Выбираем метод отправки
         if edit_existing:
@@ -179,10 +177,10 @@ async def show_order_page(
             )
 
     except IndexError:
-        error_msg = "⚠️ Неверный номер заказа" if is_admin else "⚠️ Ошибка отображения заказа"
+        error_msg = "⚠️ Неверный номер заказа" if role == "staff" and role == "owner" else "⚠️ Ошибка отображения заказа"
         logging.error(f"IndexError: page={page}, orders_count={len(orders)}")
     except Exception as e:
-        error_msg = "⚠️ Ошибка загрузки заказа" if is_admin else "⚠️ Произошла ошибка"
+        error_msg = "⚠️ Ошибка загрузки заказа" if role == "staff" and role == "owner" else "⚠️ Произошла ошибка"
         logging.error(f"Error showing order: {e}")
 
     return await message.answer(error_msg)

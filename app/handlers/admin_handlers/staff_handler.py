@@ -29,6 +29,7 @@ async def handle_mailing_callback(
             "✉️ Введите сообщение для рассылки:",
             reply_markup=types.ReplyKeyboardRemove()
         )
+
         await state.set_state(MailingStates.waiting_for_message)
         await callback.answer()
     except Exception as e:
@@ -42,7 +43,6 @@ async def handle_add_staff_callback(
         state: FSMContext
 ):
     try:
-        await state.clear()
         await callback.message.delete()
         await callback.message.answer(
             "✉️ Введите имя пользователя в формате (@username):",
@@ -71,14 +71,21 @@ async def handle_mailing_callback(
         await callback.answer("⚠️ Ошибка при выходе в главное меню", show_alert=True)
 
 @router.callback_query(StaffAction.filter(F.action == "edit_products"))
-async def handle_edit_product_callback(callback: types.CallbackQuery):
+async def handle_edit_product_callback(
+        callback: types.CallbackQuery,
+        state: FSMContext
+        ):
+
     try:
+
+        role = UserFetcher.get_role_by_telegram_id(callback.from_user.id)
+        await state.update_data(role=role)
         await show_product(
             target=callback,
             index=0,
             fetch_data_func=ProductFetcher.all_juices,
             keyboard_func=kb_nav,
-            is_admin=True  # Устанавливаем флаг при входе в админку
+            role=role  # Устанавливаем флаг при входе в админку
         )
         await callback.answer()
     except Exception as e:
@@ -96,6 +103,7 @@ async def handle_orders_callback(
     await state.clear()
     try:
         orders = ProductFetcher.get_all_orders()
+        role = UserFetcher.get_role_by_telegram_id(callback.from_user.id)
 
         if not orders:
             await callback.answer("Нет доступных заказов", show_alert=True)
@@ -105,7 +113,7 @@ async def handle_orders_callback(
         await state.update_data(
             all_orders=orders,
             current_page=0,
-            is_admin=True
+            role=role
         )
         print(await state.get_data())  # Убедитесь, что данные есть
 
@@ -114,7 +122,7 @@ async def handle_orders_callback(
             callback.message,
             orders,
             0,
-            is_admin=True
+            role=role
         )
         await callback.answer()
 

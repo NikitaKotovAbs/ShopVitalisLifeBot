@@ -24,7 +24,7 @@ async def navigate_juices(
         index=callback_data.current_index + 1 if callback_data.action == "next" else callback_data.current_index - 1,
         fetch_data_func=ProductFetcher.all_juices,
         keyboard_func=navigation_keyboard,
-        is_admin=callback_data.is_admin
+        role=callback_data.role
     )
     await callback.answer()
 

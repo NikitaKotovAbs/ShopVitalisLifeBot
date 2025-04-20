@@ -33,9 +33,12 @@ async def handle_add_product_callback(
 @router.callback_query(StaffAction.filter(F.action == "delete"))
 async def handle_delete_product_callback(
         callback: types.CallbackQuery,
-        callback_data: StaffAction
+        callback_data: StaffAction,
+        state: FSMContext
 ):
     try:
+        data = await state.get_data()
+        role = data.get('role')
         product_id = callback_data.product_id
         # Удаляем продукт
         success = ProductRemoved.remove_product_by_id(product_id)
@@ -51,7 +54,7 @@ async def handle_delete_product_callback(
                     index=new_index,
                     fetch_data_func=ProductFetcher.all_juices,
                     keyboard_func=kb_nav,
-                    is_admin=True
+                    role=role
                 )
                 await callback.answer("✅ Продукт удален")
             else:
@@ -70,36 +73,34 @@ async def handle_delete_product_callback(
 
 
 @router.callback_query(StaffAction.filter(F.action == "back_staff_menu"))
-async def handle_back_staff_menu_callback(callback: types.CallbackQuery):
-    telegram_id = callback.from_user.id
-    user_data = UserFetcher.get_user_by_telegram_id(telegram_id)
+async def handle_back_staff_menu_callback(
+        callback: types.CallbackQuery,
+        state: FSMContext
 
-    if not user_data:
+):
+    # telegram_id = callback.from_user.id
+    # user_data = UserFetcher.get_user_by_telegram_id(telegram_id)
+    data = await state.get_data()
+    role = data.get('role')
+    if not role:
         await callback.answer("Ошибка: данные пользователя не найдены", show_alert=True)
         return
 
     try:
-        if user_data.get('is_owner'):
+        if role == "owner" or role == "staff":
             # Удаляем предыдущее сообщение с кнопками (если нужно)
             await callback.message.delete()
 
             # Отправляем новое сообщение
             await callback.message.answer(
-                "Вы зашли в панель персонала как Админ",
+                "Вы зашли в панель персонала",
                 reply_markup=ReplyKeyboardRemove()
             )
 
             # Отправляем inline-клавиатуру
             await callback.message.answer(
                 "Выберите действие:",
-                reply_markup=kb_staff_menu(role="owner")
-            )
-
-        elif user_data.get('is_staff'):
-            await callback.message.delete()
-            await callback.message.answer(
-                "Вы зашли в панель персонала как Сотрудник",
-                reply_markup=ReplyKeyboardRemove()
+                reply_markup=kb_staff_menu(role=role)
             )
         else:
             await callback.message.delete()

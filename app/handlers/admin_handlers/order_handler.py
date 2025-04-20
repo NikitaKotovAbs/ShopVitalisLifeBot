@@ -26,11 +26,11 @@ async def handle_view_order(
         data = await state.get_data()
         print(f"Данные в state: {data}")  # Убедитесь, что orders есть
         orders = data.get('all_orders', [])
-        is_admin = data.get('is_admin')
+        role = data.get('role')
         # Проверяем и корректируем page
         page = max(0, min(callback_data.page, len(orders) - 1))
 
-        await show_order_page(callback.message, orders, page, is_admin)
+        await show_order_page(callback.message, orders, page, role)
         await state.update_data(current_page=page)
         await callback.answer()
 
@@ -84,7 +84,7 @@ async def handle_set_status(
 
         data = await state.get_data()
         orders = data.get('all_orders', [])
-        is_admin = data.get('is_admin')
+        role = data.get('role')
         current_page = data.get('current_page', 0)
 
         # Находим заказ в локальном списке
@@ -125,7 +125,7 @@ async def handle_set_status(
         )
 
         # Обновляем сообщение
-        await show_order_page(callback.message, orders, current_page, is_admin)
+        await show_order_page(callback.message, orders, current_page, role)
         await callback.answer(f"Статус изменен на: {callback_data.status}")
 
     except Exception as e:
@@ -142,14 +142,14 @@ async def handle_back_order(
         # Получаем сохраненные заказы из состояния
         data = await state.get_data()
         orders = data.get('all_orders', [])
-        is_admin = data.get('is_admin')
+        role = data.get('role')
         # Если заказов нет в состоянии, загружаем заново
         if not orders:
             orders = ProductFetcher.get_all_orders()
             await state.update_data(all_orders=orders)
 
         # Редактируем текущее сообщение, показывая первый заказ
-        await show_order_page(callback.message, orders, 0, is_admin)
+        await show_order_page(callback.message, orders, 0, role)
         await callback.answer()
 
     except Exception as e:

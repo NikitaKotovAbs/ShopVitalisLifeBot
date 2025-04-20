@@ -1,5 +1,7 @@
 from aiogram import Router, types
 from aiogram.filters import Command
+from aiogram.fsm.context import FSMContext
+
 from app.keyboard import kb_menu
 from app.utils.db.operations.add_data import UserAdd
 from app.utils.db.operations.fetch_data import UserFetcher
@@ -16,7 +18,7 @@ async def cmd_start(message: types.Message):
     if user_data:
         welcome_text = (
             f"С возвращением, {message.from_user.full_name}!\n"
-            f"Ваш статус: {'Админ' if user_data['is_owner'] else 'Персонал' if user_data['is_staff'] else 'Пользователь'}"
+            f"Ваш статус: {'Админ' if user_data['role'] == 'owner' else 'Персонал' if user_data['role'] == 'staff' else 'Пользователь'}"
         )
     else:
         # Новый пользователь
@@ -30,23 +32,27 @@ async def cmd_start(message: types.Message):
 from aiogram.types import ReplyKeyboardRemove
 
 @router.message(Command("staff"))
-async def staff_panel(message: types.Message):
-    telegram_id = message.from_user.id
-    user_data = UserFetcher.get_user_by_telegram_id(telegram_id)
+async def staff_panel(
+        message: types.Message,
+        state: FSMContext
+):
+    await state.clear()
+    role = UserFetcher.get_role_by_telegram_id(message.from_user.id)
 
-    if not user_data:
+    await state.update_data(role=role)
+    if not role:
         await message.answer("Ошибка: данные пользователя не найдены", reply_markup=ReplyKeyboardRemove())
         return
-
-    if user_data.get('is_owner') or user_data.get('is_staff'):
+    print(role)
+    if role == "owner" or role == "staff":
         await message.answer(
-            "Вы зашли в панель персонала как Админ",
+            "Вы зашли в панель персонала",
             reply_markup=ReplyKeyboardRemove()  # Сначала закрываем Reply-клавиатуру
         )
         # Затем отправляем сообщение с Inline-клавиатурой
         await message.answer(
             "Выберите действие:",
-            reply_markup=kb_staff_menu(role="owner")
+            reply_markup=kb_staff_menu(role=role)
         )
     else:
         await message.answer(
