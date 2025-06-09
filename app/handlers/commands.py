@@ -24,10 +24,15 @@ async def cmd_start(message: types.Message):
         # Новый пользователь
         UserAdd.init_user(telegram_id, telegram_tag)
         welcome_text = (
-            f"Добро пожаловать, {message.from_user.full_name}!\n"
-            "Вы были зарегистрированы в системе!"
+            f"<b>✨ Добро пожаловать, {message.from_user.full_name}! ✨</b>\n\n"
+            "<i>🎉 Вы успешно зарегистрированы в системе!</i>\n\n"
+            "<b>⚠️ Внимание:</b> бот находится в тестовом режиме\n"
+            "📦 <b>Заказы временно недоступны</b>\n\n"
+            "📩 Если хотите сделать заказ, обращайтесь:\n"
+            "👉 @nikiforenkoirina\n\n"
+            "Спасибо за понимание! ❤️"
         )
-    await message.answer(welcome_text, reply_markup=kb_menu())
+    await message.answer(welcome_text, reply_markup=kb_menu(), parse_mode="HTML")
 
 from aiogram.types import ReplyKeyboardRemove
 
