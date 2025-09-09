@@ -27,7 +27,7 @@ cursor = conn.cursor()
 #     3333,
 #     image_to_blob('card.png')  # Преобразуем картинку в бинарный формат
 # )
-#
+# #
 # cursor.execute("""
 #     INSERT INTO products (title, description, price, image)
 #     VALUES (?, ?, ?, ?)
@@ -45,19 +45,20 @@ cursor = conn.cursor()
 #     VALUES (?, ?, ?, ?)
 # """, product_with_image)
 
+cursor.execute("""
+    UPDATE users SET role = 'owner'
+    WHERE id = 1
+""")
+
 # cursor.execute("""
-#     UPDATE users SET role = 'owner'
+#     INSERT INTO orders (address, total_price, user_id, status)
+#     VALUES ('Test', 3333, 3, 'new')
 # """)
-
-cursor.execute("""
-    INSERT INTO orders (address, total_price, user_id, status)
-    VALUES ('Test', 3333, 3, 'new')
-""")
-
-cursor.execute("""
-    INSERT INTO order_products (product_id, order_id, quantity)
-    VALUES (2, 3, 1)
-""")
+#
+# cursor.execute("""
+#     INSERT INTO order_products (product_id, order_id, quantity)
+#     VALUES (2, 3, 1)
+# """)
 
 # Сохраняем изменения
 conn.commit()
