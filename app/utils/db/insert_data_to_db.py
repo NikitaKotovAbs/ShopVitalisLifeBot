@@ -20,24 +20,23 @@ cursor = conn.cursor()
 #     VALUES (?, ?, ?)
 # """, ('Телефон', 'Новый смартфон', 29999.99))
 
-# Добавляем товар с изображением
-# product_with_image = (
-#     'Сок из ростков пшеницы Витграсс «Vitalis-life».',
-#     'Состав: Витграсс, замороженный сок ростков пшеницы 30 порций по 30 мл.',
-#     3333,
-#     image_to_blob('card.png')  # Преобразуем картинку в бинарный формат
-# )
+product_with_image = (
+    'Топпинг “Vitalis-life” медово-лимонно-имбирный',
+    'Состав: Медово-лимонно-имбирный 100% натуральный, с сохранением всех полезных свойств, благодаря самой современной шоковой заморозке.',
+    1355,
+    image_to_blob('card2.png')  # Преобразуем картинку в бинарный формат
+)
 # #
-# cursor.execute("""
-#     INSERT INTO products (title, description, price, image)
-#     VALUES (?, ?, ?, ?)
-# """, product_with_image)
+cursor.execute("""
+    INSERT INTO products (title, description, price, image)
+    VALUES (?, ?, ?, ?)
+""", product_with_image)
 #
 # product_with_image = (
 #     'Смузи «Зеленый чиа». 300 мл.',
 #     'Состав: семена чиа, пророщенная чечевица, зелёное яблоко, грецкие орехи, петрушка.',
 #     333,
-#     image_to_blob('card2.jpg')  # Преобразуем картинку в бинарный формат
+#     image_to_blob('card2.png')  # Преобразуем картинку в бинарный формат
 # )
 #
 # cursor.execute("""
@@ -46,12 +45,13 @@ cursor = conn.cursor()
 # """, product_with_image)
 
 cursor.execute("""
-    UPDATE users SET role = 'owner'
+    UPDATE users SET role = 'staff'
     WHERE id = 1
 """)
 
 # cursor.execute("""
-#     INSERT INTO orders (address, total_price, user_id, status)
+#     INSERT INTO orders (address, total_
+#     price, user_id, status)
 #     VALUES ('Test', 3333, 3, 'new')
 # """)
 #
