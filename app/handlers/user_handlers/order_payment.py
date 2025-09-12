@@ -143,6 +143,15 @@ async def send_payment_invoice(
             await state.clear()
             return
 
+        print(f"Сумма в копейках: {total_kopecks}")
+        print(f"Тип суммы: {type(total_kopecks)}")
+
+        if total_kopecks < 100:  # Минимум 1 рубль (100 копеек)
+            raise ValueError("Сумма слишком мала для оплаты")
+
+        provider_token = os.getenv('YOOKASSA_PROVIDER_TOKEN')
+        print(f"Токен провайдера: {provider_token}")  # Проверьте что токен не None
+
         await bot.send_invoice(
             chat_id=user_id,
             title="Оплата заказа",
@@ -151,10 +160,13 @@ async def send_payment_invoice(
             provider_token=os.getenv('YOOKASSA_PROVIDER_TOKEN'),
             currency="RUB",
             prices=[LabeledPrice(label="Товары", amount=total_kopecks)],
-            need_phone_number=True
+            need_phone_number=True,
+            provider_data = None
         )
 
     except Exception as e:
+        print(f"Ошибка: {e}")
+        print(f"Детали: сумма={total_kopecks}, тип={type(total_kopecks)}")
         logger.error(f"Ошибка при отправке инвойса: {e}", exc_info=True)
         await message.answer("❌ Произошла ошибка при создании платежа")
         await state.clear()

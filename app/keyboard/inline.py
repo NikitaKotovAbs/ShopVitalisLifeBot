@@ -17,7 +17,8 @@ def navigation_keyboard(
 
     if role in ("owner", "staff"):
         builder.button(text="🗑️ Удалить", callback_data=StaffAction(action="delete", product_id=item_id))
-        builder.button(text="✏️ Редактировать", callback_data=StaffAction(action="add", product_id=item_id))
+        builder.button(text="➕ Новый товар", callback_data=StaffAction(action="add", product_id=item_id))
+        # builder.button(text="✏️ Изменить данные", callback_data=StaffAction(action="edit_product"))
         builder.button(text="🔙 В меню", callback_data=StaffAction(action="back_staff_menu"))
         builder.adjust(2, 1)  # 2 кнопки в первом ряду, 1 во втором
 

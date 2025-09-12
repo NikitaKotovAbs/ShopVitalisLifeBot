@@ -21,10 +21,10 @@ cursor = conn.cursor()
 # """, ('Телефон', 'Новый смартфон', 29999.99))
 
 product_with_image = (
-    'Топпинг “Vitalis-life” медово-лимонно-имбирный',
-    'Состав: Медово-лимонно-имбирный 100% натуральный, с сохранением всех полезных свойств, благодаря самой современной шоковой заморозке.',
+    'Топпинги “Vitalis-life”.',
+    'Топпинг: медово-грейпфрутово-мятный 15 порций по 30 мл',
     1355,
-    image_to_blob('card2.png')  # Преобразуем картинку в бинарный формат
+    image_to_blob('card_5.png')  # Преобразуем картинку в бинарный формат
 )
 # #
 cursor.execute("""
@@ -44,10 +44,10 @@ cursor.execute("""
 #     VALUES (?, ?, ?, ?)
 # """, product_with_image)
 
-cursor.execute("""
-    UPDATE users SET role = 'staff'
-    WHERE id = 1
-""")
+# cursor.execute("""
+#     UPDATE users SET role = 'owner'
+#     WHERE id = 1
+# """)
 
 # cursor.execute("""
 #     INSERT INTO orders (address, total_
