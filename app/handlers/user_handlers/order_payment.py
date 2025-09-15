@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 from decimal import Decimal
@@ -143,30 +144,64 @@ async def send_payment_invoice(
             await state.clear()
             return
 
-        print(f"Сумма в копейках: {total_kopecks}")
-        print(f"Тип суммы: {type(total_kopecks)}")
-
-        if total_kopecks < 100:  # Минимум 1 рубль (100 копеек)
+        if total_kopecks < 100:
             raise ValueError("Сумма слишком мала для оплаты")
 
+        # Получаем информацию о товарах в корзине
+        basket = product_manager.get_products(user_id)
+        items_data = ProductFetcher.get_juices_by_ids(list(basket.keys()))
+
+        if not items_data:
+            await message.answer("❌ Ошибка: товары в корзине не найдены")
+            await state.clear()
+            return
+
+        # Формируем items для чека
+        receipt_items = []
+        for product_id, quantity in basket.items():
+            if product_id in items_data:
+                _, name, price, _ = items_data[product_id]
+                # Цена в рублях (не в копейках!)
+                item_price_rub = Decimal(str(price))
+                receipt_items.append({
+                    "description": name[:128],  # ограничение длины описания
+                    "quantity": float(quantity),
+                    "amount": {
+                        "value": float(item_price_rub),
+                        "currency": "RUB"
+                    },
+                    "vat_code": 1,  # НДС 20%
+                    "payment_mode": "full_payment",
+                    "payment_subject": "commodity"  # товар
+                })
+
+        # Формируем provider_data для чека
+        provider_data = {
+            "receipt": {
+                "customer": {
+                    # Email будет получен от пользователя через need_email
+                },
+                "items": receipt_items,
+                "tax_system_code": 1  # ОСН
+            }
+        }
+
         provider_token = os.getenv('YOOKASSA_PROVIDER_TOKEN')
-        print(f"Токен провайдера: {provider_token}")  # Проверьте что токен не None
 
         await bot.send_invoice(
             chat_id=user_id,
             title="Оплата заказа",
             description=f"Адрес: {address[:100]}",
             payload=f"{user_id}_{hash(address)}",
-            provider_token=os.getenv('YOOKASSA_PROVIDER_TOKEN'),
+            provider_token=provider_token,
             currency="RUB",
             prices=[LabeledPrice(label="Товары", amount=total_kopecks)],
-            need_phone_number=True,
-            provider_data = None
+            need_email=True,  # Запрашиваем email
+            send_email_to_provider=True,  # Передаем email провайдеру
+            provider_data=json.dumps(provider_data)  # Данные для чека
         )
 
     except Exception as e:
-        print(f"Ошибка: {e}")
-        print(f"Детали: сумма={total_kopecks}, тип={type(total_kopecks)}")
         logger.error(f"Ошибка при отправке инвойса: {e}", exc_info=True)
         await message.answer("❌ Произошла ошибка при создании платежа")
         await state.clear()
